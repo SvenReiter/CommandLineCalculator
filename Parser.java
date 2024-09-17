@@ -1,89 +1,91 @@
 public class Parser {
     char[]pointCalc= new char[]{'*','/'};
     char[]dashCalc= new char[]{'-','+'};
-
     int result;
     public Parser(String calculation) {
-        parse(calculation);
-    }
-
-    private void parse(String calculation) {
-        for(int i=0; i<calculation.length(); i++) {
-            if(calculation.charAt(i)==pointCalc[0] | calculation.charAt(i)==pointCalc[1]) {
-                String lv="", rv="";
-                int iLv, iRv;
-                for(iLv=i-1; iLv>(-1); iLv--) {
-                    if(Character.isDigit(calculation.charAt(iLv))) {
-                        lv= calculation.charAt(iLv)+lv;
-                    }else {
-                        break;
-                    }
+        String lv= "", rv= "";
+        while(calculation.indexOf(pointCalc[0])!= (-1) || calculation.indexOf(pointCalc[1])!= (-1)) {
+            for (int i = 0; i < calculation.length(); i++) {
+                if (calculation.charAt(i) == pointCalc[0] | calculation.charAt(i) == pointCalc[1]) {
+                    lv = readLeftValue(calculation, i);
+                    rv = readRightValue(calculation, i);
+                    calculation = new StringBuilder(calculation).replace(i - (lv.length()), i + (rv.length() + 1), calc(lv, calculation.charAt(i), rv)).toString();
                 }
-                iLv+=1;
-
-                for(iRv=i+1; iRv<calculation.length(); iRv++) {
-                    if(Character.isDigit(calculation.charAt(iRv))) {
-                        rv+= calculation.charAt(iRv);
-                    }else {
-                        break;
-                    }
-                }
-                calculation= new StringBuilder(calculation).replace(iLv, iRv, String.valueOf(calc(lv, calculation.charAt(i), rv))).toString();
-                parse(calculation);
-                return;     //to break current call, after recursion got initiated
             }
         }
-
         for(int i=0; i<calculation.length(); i++) {
-            if(calculation.charAt(i)==dashCalc[0] | calculation.charAt(i)==dashCalc[1]) {
-                String lv="", rv="";
-                int iLv, iRv;
-                for(iLv=i-1; iLv>(-1); iLv--) {
-                    if(Character.isDigit(calculation.charAt(iLv))) {
-                        lv= calculation.charAt(iLv)+lv;
-                    }else {
-                        break;
-                    }
-                }
-                iLv+=1;
-
-                for(iRv=i+1; iRv<calculation.length(); iRv++) {
-                    if(Character.isDigit(calculation.charAt(iRv))) {
-                        rv+= calculation.charAt(iRv);
-                    }else {
-                        break;
-                    }
-                }
-                calculation= new StringBuilder(calculation).replace(iLv, iRv, String.valueOf(calc(lv, calculation.charAt(i), rv))).toString();
-                parse(calculation);
-                return;     //to break current call, after recursion got initiated
+            if(calculation.charAt(i)== dashCalc[0] && calculation.charAt(i-1)!= '(') {
+                lv= readLeftValue(calculation, i);
+                rv= readRightValue(calculation, i);
+                calculation = new StringBuilder(calculation).replace(i - (lv.length()), i + (rv.length() + 1), calc(lv, calculation.charAt(i), rv)).toString();
             }
         }
-        if(calculation.contains(String.valueOf(dashCalc[0])) | calculation.contains(String.valueOf(dashCalc[1]))) {
-            parse(calculation);
+        while(calculation.indexOf(dashCalc[1])!= (-1)) {
+            for (int i = 0; i < calculation.length(); i++) {
+                if (calculation.charAt(i) == dashCalc[1]) {
+                    lv = readLeftValue(calculation, i);
+                    rv = readRightValue(calculation, i);
+                    calculation = new StringBuilder(calculation).replace(i - (lv.length()), i + (rv.length() + 1), calc(lv, calculation.charAt(i), rv)).toString();
+                }
+            }
         }
-        result = Integer.parseInt(calculation);
+        calculation= calculation.replaceAll("\\(|\\)","");
+        result= Integer.parseInt(calculation);
     }
 
-    private int calc(String lV, char c, String rV) {
+    private String readRightValue(String calc, int idOp) {
+        StringBuilder res= new StringBuilder("");
+        for(int i=idOp+1; i<calc.length(); i++) {
+            if(Character.isDigit(calc.charAt(i)) | (calc.charAt(i)=='-'&&(calc.length()>i && calc.charAt(i-1)=='(')) |
+                    calc.charAt(i)==')' | (((calc.length()-1)>i && calc.charAt(i+1)=='-')&&calc.charAt(i)=='(')) {
+                res.append(calc.charAt(i));
+            }else break;
+        }
+        return res.toString();
+    }
+
+    private String readLeftValue(String calc, int idOp) {
+        StringBuilder res= new StringBuilder("");
+        for(int i=idOp-1; i>(-1); i--) {
+            if(Character.isDigit(calc.charAt(i)) | (calc.charAt(i)=='-'&&calc.charAt(i-1)=='(') |
+                    calc.charAt(i)==')' | (calc.charAt(i+1)=='-'&&calc.charAt(i)=='(')) {
+                res.append(calc.charAt(i));
+            }else break;
+        }
+        return res.reverse().toString();
+    }
+
+    private String calc(String lV, char c, String rV) {
+        int result= 0;
+        if(lV.isEmpty() || rV.isEmpty()) return "";
+        lV= lV.replaceAll("\\(|\\)","");
+        rV= rV.replaceAll("\\(|\\)","");
         switch(c) {
             case '*': {
-                return (Integer.parseInt(lV)*Integer.parseInt(rV));
+                result= Integer.parseInt(lV)*Integer.parseInt(rV);
+                break;
             }
             case '/': {
-                return (Integer.parseInt(lV)/Integer.parseInt(rV));
+                result= Integer.parseInt(lV)/Integer.parseInt(rV);
+                break;
             }
             case '+': {
-                return (Integer.parseInt(lV)+Integer.parseInt(rV));
+                result= Integer.parseInt(lV)+Integer.parseInt(rV);
+                break;
             }
             case '-': {
-                return (Integer.parseInt(lV)-Integer.parseInt(rV));
+                result= Integer.parseInt(lV)-Integer.parseInt(rV);
+                break;
             }
         }
-        return 0;
+        if(result<0) {
+            return "("+String.valueOf(result)+")";
+        }else {
+            return String.valueOf(result);
+        }
     }
 
     public int getResult() {
-        return result;
+        return this.result;
     }
 }
