@@ -1,7 +1,7 @@
 public class Parser {
     char[]pointCalc= new char[]{'*','/'};
     char[]dashCalc= new char[]{'-','+'};
-    int result;
+    double result;
     public Parser(String calculation) {
         boolean isNegativeBracketing= false;
         int from=-1, to=-1;
@@ -24,7 +24,8 @@ public class Parser {
                 isNegativeBracketing= false;
             }
         }
-        result= Integer.parseInt(parse(calculation).replaceAll("\\(|\\)",""));  // Erst das verarbeitete/berechnete finale Resultat muss von Klammern befreit werden
+        //result= Integer.parseInt(parse(calculation).replaceAll("\\(|\\)",""));  // Erst das verarbeitete/berechnete finale Resultat muss von Klammern befreit werden
+        result= Double.parseDouble(parse(calculation).replaceAll("\\(|\\)",""));  // Erst das verarbeitete/berechnete finale Resultat muss von Klammern befreit werden
     }
 
     private String parse(String calculation) {
@@ -42,6 +43,8 @@ public class Parser {
             }
         }
         for(int i=0; i<calculation.length(); i++) {
+            //Die Methode schlägt Fehl, weil '-' aus "-0.0" als Rechenzeichen interpretiert wird,
+            // das folgt daher, weil "-0.0" nicht geklammert wurde
             if(calculation.charAt(i)== dashCalc[0] && calculation.charAt(i-1)!= '(') {
                 lv= readLeftValue(calculation, i);
                 rv= readRightValue(calculation, i);
@@ -70,7 +73,7 @@ public class Parser {
         StringBuilder res= new StringBuilder("");
         for(int i=idOp+1; i<calc.length(); i++) {
             if(Character.isDigit(calc.charAt(i)) | (calc.charAt(i)=='-'&&(calc.length()>i && calc.charAt(i-1)=='(')) |
-                    calc.charAt(i)==')' | (((calc.length()-1)>i && calc.charAt(i+1)=='-')&&calc.charAt(i)=='(')) {
+                    calc.charAt(i)==')' | (((calc.length()-1)>i && calc.charAt(i+1)=='-')&&calc.charAt(i)=='(') |calc.charAt(i)=='.') {
                 res.append(calc.charAt(i));
             }else break;
         }
@@ -81,44 +84,45 @@ public class Parser {
         StringBuilder res= new StringBuilder("");
         for(int i=idOp-1; i>(-1); i--) {
             if(Character.isDigit(calc.charAt(i)) | (calc.charAt(i)=='-'&&calc.charAt(i-1)=='(') |
-                    calc.charAt(i)==')' | (calc.charAt(i+1)=='-'&&calc.charAt(i)=='(')) {
+                    calc.charAt(i)==')' | (calc.charAt(i+1)=='-'&&calc.charAt(i)=='(') |calc.charAt(i)=='.') {
                 res.append(calc.charAt(i));
             }else break;
         }
-        return res.reverse().toString();
+        String result= res.reverse().toString();
+        return result;
     }
 
     private String calc(String lV, char c, String rV) {
-        int result= 0;
+        double result= 0;
         if(lV.isEmpty() || rV.isEmpty()) return "";
         lV= lV.replaceAll("\\(|\\)","");
         rV= rV.replaceAll("\\(|\\)","");
         switch(c) {
             case '*': {
-                result= Integer.parseInt(lV)*Integer.parseInt(rV);
+                result= Double.parseDouble(lV)*Double.parseDouble(rV);
                 break;
             }
             case '/': {
-                result= Integer.parseInt(lV)/Integer.parseInt(rV);
+                result= (Double.parseDouble(lV)/Double.parseDouble(rV));
                 break;
             }
             case '+': {
-                result= Integer.parseInt(lV)+Integer.parseInt(rV);
+                result= Double.parseDouble(lV)+Double.parseDouble(rV);
                 break;
             }
             case '-': {
-                result= Integer.parseInt(lV)-Integer.parseInt(rV);
+                result= Double.parseDouble(lV)-Double.parseDouble(rV);
                 break;
             }
         }
-        if(result<0) {
+        if(result<=0.0) {
             return "("+result+")";
         }else {
             return String.valueOf(result);
         }
     }
 
-    public int getResult() {
+    public double getResult() {
         return this.result;
     }
 }
