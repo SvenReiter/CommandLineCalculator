@@ -3,13 +3,41 @@ public class Parser {
     char[]dashCalc= new char[]{'-','+'};
     int result;
     public Parser(String calculation) {
+        boolean isNegativeBracketing= false;
+        int from=-1, to=-1;
+        StringBuilder sb;
+        for(int i=0; i<calculation.length(); i++) {
+            if(calculation.charAt(i)== '(' && calculation.charAt(i+1)== '-') {
+                isNegativeBracketing = true;
+            }
+            if(calculation.charAt(i)== '(' && !isNegativeBracketing) {
+                from= i+1;
+            }
+            if(calculation.charAt(i)== ')' && !isNegativeBracketing) {
+                to= i;
+                sb= new StringBuilder((calculation));
+                calculation= sb.replace(from-1, to+1, parse(calculation.substring(from, to))).toString();
+                i= -1;
+                continue;
+            }
+            if(calculation.charAt(i)== ')' && isNegativeBracketing) {
+                isNegativeBracketing= false;
+            }
+        }
+        result= Integer.parseInt(parse(calculation).replaceAll("\\(|\\)",""));  // Erst das verarbeitete/berechnete finale Resultat muss von Klammern befreit werden
+    }
+
+    private String parse(String calculation) {
         String lv= "", rv= "";
         while(calculation.indexOf(pointCalc[0])!= (-1) || calculation.indexOf(pointCalc[1])!= (-1)) {
             for (int i = 0; i < calculation.length(); i++) {
                 if (calculation.charAt(i) == pointCalc[0] | calculation.charAt(i) == pointCalc[1]) {
                     lv = readLeftValue(calculation, i);
                     rv = readRightValue(calculation, i);
-                    calculation = new StringBuilder(calculation).replace(i - (lv.length()), i + (rv.length() + 1), calc(lv, calculation.charAt(i), rv)).toString();
+                    calculation = new StringBuilder(calculation).
+                            replace(i - (lv.length()),
+                                    i + (rv.length() + 1),
+                                    calc(lv, calculation.charAt(i), rv)).toString();
                 }
             }
         }
@@ -17,7 +45,10 @@ public class Parser {
             if(calculation.charAt(i)== dashCalc[0] && calculation.charAt(i-1)!= '(') {
                 lv= readLeftValue(calculation, i);
                 rv= readRightValue(calculation, i);
-                calculation = new StringBuilder(calculation).replace(i - (lv.length()), i + (rv.length() + 1), calc(lv, calculation.charAt(i), rv)).toString();
+                calculation = new StringBuilder(calculation).
+                        replace(i - (lv.length()),
+                                i + (rv.length() + 1),
+                                calc(lv, calculation.charAt(i), rv)).toString();
             }
         }
         while(calculation.indexOf(dashCalc[1])!= (-1)) {
@@ -25,12 +56,14 @@ public class Parser {
                 if (calculation.charAt(i) == dashCalc[1]) {
                     lv = readLeftValue(calculation, i);
                     rv = readRightValue(calculation, i);
-                    calculation = new StringBuilder(calculation).replace(i - (lv.length()), i + (rv.length() + 1), calc(lv, calculation.charAt(i), rv)).toString();
+                    calculation = new StringBuilder(calculation).
+                            replace(i - (lv.length()),
+                                    i + (rv.length() + 1),
+                                    calc(lv, calculation.charAt(i), rv)).toString();
                 }
             }
         }
-        calculation= calculation.replaceAll("\\(|\\)","");
-        result= Integer.parseInt(calculation);
+        return calculation;
     }
 
     private String readRightValue(String calc, int idOp) {
@@ -79,7 +112,7 @@ public class Parser {
             }
         }
         if(result<0) {
-            return "("+String.valueOf(result)+")";
+            return "("+result+")";
         }else {
             return String.valueOf(result);
         }
